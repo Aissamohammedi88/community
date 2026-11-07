@@ -1,27 +1,48 @@
-name: Remove the inactive label
 
-on:
-  discussion_comment:
-    types: [created]
+class Node(object):
+    def __init__(self, tag, value, start_mark, end_mark):
+        self.tag = tag
+        self.value = value
+        self.start_mark = start_mark
+        self.end_mark = end_mark
+    def __repr__(self):
+        value = self.value
+        #if isinstance(value, list):
+        #    if len(value) == 0:
+        #        value = '<empty>'
+        #    elif len(value) == 1:
+        #        value = '<1 item>'
+        #    else:
+        #        value = '<%d items>' % len(value)
+        #else:
+        #    if len(value) > 75:
+        #        value = repr(value[:70]+u' ... ')
+        #    else:
+        #        value = repr(value)
+        value = repr(value)
+        return '%s(tag=%r, value=%s)' % (self.__class__.__name__, self.tag, value)
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      discussions: write
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+class ScalarNode(Node):
+    id = 'scalar'
+    def __init__(self, tag, value,
+            start_mark=None, end_mark=None, style=None):
+        self.tag = tag
+        self.value = value
+        self.start_mark = start_mark
+        self.end_mark = end_mark
+        self.style = style
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+class CollectionNode(Node):
+    def __init__(self, tag, value,
+            start_mark=None, end_mark=None, flow_style=None):
+        self.tag = tag
+        self.value = value
+        self.start_mark = start_mark
+        self.end_mark = end_mark
+        self.flow_style = flow_style
 
-      - name: Bundle install
-        run: bundle install
+class SequenceNode(CollectionNode):
+    id = 'sequence'
 
-      - name: Remove the label
-        run: .github/actions/remove_inactive_label
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_ID: ${{ github.event.discussion.node_id }}
+class MappingNode(CollectionNode):
+    id = 'mapping'
